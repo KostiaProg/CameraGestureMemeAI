@@ -32,6 +32,7 @@ def camera() -> cv2.VideoCapture:
     memory = []
 
     time = None
+    add_info = None
     while True:
         while chosen < 0 or chosen > 3:
             chosen = int(input("What operation do you want to do (0 - '+', 1 - '-', 2 - '*', 3 - '/'): "))
@@ -39,15 +40,20 @@ def camera() -> cv2.VideoCapture:
         ret, frame = webcam.read()
         if ret: # true if frame captured correctly
             if not is_num2:
-                time, memory, is_num2 = camera_logic(num1, is_num2, frame, hand_detector, finger_model, memory, time, WAIT_TIME)
+                time, memory, is_num2, add_info = camera_logic(num1, is_num2, frame, hand_detector, finger_model, memory, time, WAIT_TIME, add_info)
                 if is_num2:
                     num1 = int("".join(map(str, memory)))
+                    add_info = str(num1)
                     memory.clear()
             else:
-                time, memory, is_num2 = camera_logic(num2, is_num2, frame, hand_detector, finger_model, memory, time, WAIT_TIME)
+                time, memory, is_num2, add_info = camera_logic(num2, is_num2, frame, hand_detector, finger_model, memory, time, WAIT_TIME, add_info)
                 if not is_num2:
                     num2 = int("".join(map(str, memory)))
-                    ans = operations[chosen](num1, num2)
+                    if num2 != 0:
+                        ans = operations[chosen](num1, num2)
+                        add_info = str(ans)
+                    else:
+                        add_info = "Can't divide by 0!"
 
                     num1 = 0
                     num2 = 0
@@ -63,7 +69,7 @@ def camera() -> cv2.VideoCapture:
     webcam.release()
     cv2.destroyAllWindows()
 
-def camera_logic(num: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detector, finger_model, memory: list, start: float = None, wait_time: float = 1.0) -> float:
+def camera_logic(num: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detector, finger_model, memory: list, start: float = None, wait_time: float = 1.0, add_info: str = None) -> float:
     w, h = 600, 600
     RED = (0, 0, 255)
 
@@ -75,6 +81,7 @@ def camera_logic(num: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detect
     # wait some time before getting next finger count
     if start is None or time.perf_counter() - start >= wait_time:
         cv2.putText(response_image, "Ready!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
+        add_info = None # restart shown num
 
         # hands need another color scheme
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -112,12 +119,15 @@ def camera_logic(num: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detect
             memory.append(sum(fingers_on_hands))
 
     else:
-        cv2.putText(response_image, "Wait!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
+        if not add_info:
+            cv2.putText(response_image, "Wait!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
+        else:
+            cv2.putText(response_image, add_info, (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
 
 
     cv2.imshow("Webcam", frame)
     cv2.imshow("Info", response_image)
     
-    return start, memory, is_num2
+    return start, memory, is_num2, add_info
 
 camera()

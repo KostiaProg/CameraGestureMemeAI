@@ -4,6 +4,8 @@ import mediapipe as mp
 import numpy as np
 import time
 
+from model import get_saved_model
+
 def camera() -> cv2.VideoCapture:
     hand_detector = mp.solutions.hands.Hands(
         static_image_mode=False,
@@ -43,7 +45,7 @@ def camera_logic(frame: cv2.typing.MatLike, hand_detector, start: float = None, 
     frame = cv2.resize(frame, (w, h))
 
     if start is None or time.perf_counter() - start >= wait_time:
-        cv2.putText(response_image, "Ready!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5)
+        cv2.putText(response_image, "Ready!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         hands = hand_detector.process(frame_rgb)
@@ -65,10 +67,10 @@ def camera_logic(frame: cv2.typing.MatLike, hand_detector, start: float = None, 
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), RED, 5)
 
-                hand_imgs.append(frame[x1:x2, y1:y2])
+                hand_imgs.append(cv2.cvtColor(frame[x1:x2, y1:y2], cv2.COLOR_RGB2GRAY))
                 start = time.perf_counter()
     else:
-        cv2.putText(response_image, "Wait!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5)
+        cv2.putText(response_image, "Wait!", (int(w/3), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, RED, 5, cv2.LINE_AA)
 
     cv2.imshow("Webcam", frame)
     cv2.imshow("Info", response_image)

@@ -22,6 +22,9 @@ transform = transforms.Compose([
     transforms.RandomRotation(degrees=(-30, 30)),
     transforms.ToTensor()
 ])
+custom_image_transform = transforms.Compose([
+        transforms.Resize((128, 128))
+])
 
 torch.manual_seed(67)
 train_data = datasets.ImageFolder(root=train_path, transform=transform)
@@ -273,3 +276,14 @@ def get_saved_model() -> nn.Module:
         loaded_model.load_state_dict(torch.load(f=state_dict_path))
     
     return loaded_model
+
+def get_fingers(model: nn.Module, img, image_transform: transforms.Compose):
+    img_transformed = image_transform(img).type(torch.float32)
+    img_transformed /= 255
+
+    model.eval()
+    with torch.inference_mode():
+        pred = model(img_transformed.unsqueeze(dim=0))
+
+    pred_probs = torch.softmax(pred, dim=1)
+    return int(torch.argmax(pred_probs, dim=1))

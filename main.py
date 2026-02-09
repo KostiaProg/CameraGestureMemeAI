@@ -116,7 +116,7 @@ def get_hand_and_fingers(img, hand_landmarks, fingers_on_hands, prev, wait_time,
 
     return fingers_on_hands, perf_counter(), prev # set timer
 
-def camera_logic(chosen: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detector, finger_model, memory: list, start: float = None, add_info: str = None) -> float:
+def camera_logic(chosen: int, is_num2: bool, frame: cv2.typing.MatLike, hand_detector, finger_model, memory: list, start: float = None, add_info: str = None):
     w, h = 600, 600
     WAIT_TIME = 3
 
